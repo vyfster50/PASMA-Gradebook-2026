@@ -184,7 +184,7 @@ export default function ProgressMatrix({
                         {getActivityIcon(activity.type)}
                         {activity.typeLabel}
                       </span>
-                      <span className="max-w-[100px] truncate text-xs" title={activity.name}>
+                      <span className="max-w-[100px] break-words text-center text-xs" title={activity.name}>
                         {activity.name}
                       </span>
                     </div>
