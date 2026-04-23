@@ -1,4 +1,4 @@
-import { Search, Download, GraduationCap, Sun, Moon } from 'lucide-react';
+import { Search, Download, GraduationCap, Sun, Moon, Settings2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import CohortDropdown from './CohortDropdown';
@@ -12,6 +12,8 @@ interface DashboardHeaderProps {
   onExportCSV: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
+  showCourseControls: boolean;
+  onToggleCourseControls: () => void;
 }
 
 export default function DashboardHeader({
@@ -23,6 +25,8 @@ export default function DashboardHeader({
   onExportCSV,
   isDark,
   onToggleTheme,
+  showCourseControls,
+  onToggleCourseControls,
 }: DashboardHeaderProps) {
   const mutedText = isDark ? 'text-slate-400' : 'text-slate-600';
   const titleText = isDark ? 'text-white' : 'text-slate-900';
@@ -36,6 +40,9 @@ export default function DashboardHeader({
   const buttonOutline = isDark
     ? 'border-white/10 bg-white/5 text-slate-100 hover:bg-white/10'
     : 'border-slate-200 bg-white text-slate-900 hover:bg-slate-100';
+  const buttonActive = isDark
+    ? 'border-indigo-400/40 bg-indigo-500/20 text-indigo-200 hover:bg-indigo-500/30'
+    : 'border-indigo-300 bg-indigo-50 text-indigo-700 hover:bg-indigo-100';
 
   return (
     <div className={stickyShell}>
@@ -62,6 +69,10 @@ export default function DashboardHeader({
               <Search className={`absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 ${mutedText}`} />
               <Input value={search} onChange={(e) => onSearchChange(e.target.value)} placeholder="Search student..." className={inputClasses} />
             </div>
+            <Button variant="outline" className={showCourseControls ? buttonActive : buttonOutline} onClick={onToggleCourseControls}>
+              <Settings2 className="mr-2 h-4 w-4" />
+              Courses
+            </Button>
             <Button variant="outline" className={buttonOutline} onClick={onExportCSV}>
               <Download className="mr-2 h-4 w-4" />
               Export CSV

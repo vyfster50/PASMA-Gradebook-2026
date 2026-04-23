@@ -60,9 +60,31 @@ const [courseOrder, setCourseOrder] = useState<number[]>([]);
 // Set of visible course IDs (controls filtering)
 const [visibleCourseIds, setVisibleCourseIds] = useState<Set<number>>(new Set());
 
-// Initialise both when data loads (in the fetchProgress useEffect)
-// courseOrder = data.courses.map(c => c.id)
-// visibleCourseIds = new Set(data.courses.map(c => c.id))
+// ⚠️  DO NOT simply skip initialisation when localStorage keys exist.
+// New courses added to the cohort since the last visit will be silently
+// absent — the user sees fewer courses than they are enrolled in.
+//
+// CORRECT pattern — call this after every data fetch:
+function applyCourseState(freshIds: number[]) {
+  const storedOrderRaw = localStorage.getItem(COURSE_ORDER_KEY);
+  const storedVisibleRaw = localStorage.getItem(VISIBLE_COURSES_KEY);
+
+  if (!storedOrderRaw) {
+    // First visit — use fresh defaults
+    setCourseOrder(freshIds);
+    setVisibleCourseIds(new Set(freshIds));
+    return;
+  }
+
+  const savedOrder: number[] = JSON.parse(storedOrderRaw);
+  const newIds = freshIds.filter(id => !savedOrder.includes(id)); // courses added since last visit
+  const validOrder = savedOrder.filter(id => freshIds.includes(id)); // prune stale ids
+  setCourseOrder([...validOrder, ...newIds]);                        // append new to end
+
+  const savedVisible: Set<number> = new Set(JSON.parse(storedVisibleRaw ?? '[]'));
+  newIds.forEach(id => savedVisible.add(id));                        // new courses auto-visible
+  setVisibleCourseIds(new Set([...savedVisible].filter(id => freshIds.includes(id))));
+}
 ```
 
 ### Derived prop to compute and pass to ProgressMatrix

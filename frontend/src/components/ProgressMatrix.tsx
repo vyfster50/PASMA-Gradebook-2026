@@ -13,6 +13,7 @@ interface ProgressMatrixProps {
   searchTerm: string;
   filter: string;
   isDark: boolean;
+  showFullNames: boolean;
   onFilterChange: (filter: string) => void;
 }
 
@@ -41,6 +42,7 @@ export default function ProgressMatrix({
   searchTerm,
   filter,
   isDark,
+  showFullNames,
   onFilterChange,
 }: ProgressMatrixProps) {
   const allActivities = useMemo(
@@ -52,11 +54,11 @@ export default function ProgressMatrix({
     () =>
       courses.map((c) => ({
         id: c.id,
-        shortname: c.shortname,
+        shortname: showFullNames ? c.fullname : c.shortname,
         span: c.activities.length,
         sublabel: `${c.activities.length} activities`,
       })),
-    [courses],
+    [courses, showFullNames],
   );
 
   const dividers = useMemo(() => getDividerIndices(courses), [courses]);
