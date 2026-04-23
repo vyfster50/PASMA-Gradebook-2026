@@ -1,0 +1,89 @@
+# App Specification Template
+# ===========================
+
+## Project Name
+Moodle Modern Gradebook (React + MUI)
+
+## Description
+A modern, responsive gradebook web app that connects to a Moodle instance on a local network server and displays grades in a clean, searchable interface.
+Users can select a course cohort, then select a student from that cohort to view their grade breakdown. The backend API is implemented as a Moodle local plugin that returns UI-shaped JSON and excludes any grade items or grades hidden from students.
+
+## Core Features
+- Cohort selection for a chosen course (list cohorts available for that course)
+- Student selection within the selected cohort (search by name, Student ID, Student Number)
+- Student grade detail view (per activity/item grades + course total)
+- Data visibility compliance: exclude “hidden from student” grade items and per-student hidden grades
+- Token-protected API calls from the frontend to the Moodle plugin endpoints
+
+## Bonus Features (Optional)
+- Cohort gradebook grid view (MUI DataGrid) with pinned identity columns (Name, Student Number, Student ID)
+- Export to CSV (student view or cohort grid)
+- Caching layer on plugin responses (short TTL) for faster navigation
+- Offline-friendly UI state (remember last selected cohort/student locally)
+- Audit logging of API requests (who/when/course/cohort) in Moodle logs
+
+## Technical Requirements
+- Language:
+  - Frontend: TypeScript
+  - Backend: PHP (Moodle local plugin)
+- Framework:
+  - Frontend: React (Vite)
+  - UI: MUI (Material UI) + MUI X (DataGrid)
+  - Backend: Moodle plugin framework (local plugin)
+- Dependencies:
+  - Frontend: react, react-dom, @mui/material, @mui/icons-material, @mui/x-data-grid
+  - Backend: Moodle core libraries (require_login, enrol APIs, gradebook APIs, custom profile field tables)
+- Storage:
+  - Moodle DB (source of truth)
+  - No separate DB required for V1
+  - Optional: Moodle config (plugin settings) to store API token securely
+- API:
+  - Moodle local plugin endpoints served from:
+    http(s)://192.168.1.9/local/gradebookapi/
+  - Authentication:
+    Bearer token in Authorization header (token stored in plugin settings; frontend reads token from env in dev)
+  - Endpoints (V1):
+    - GET /local/gradebookapi/cohorts.php?courseid={courseid}
+      Returns cohorts for the course
+    - GET /local/gradebookapi/students.php?courseid={courseid}&cohortid={cohortid}
+      Returns students in the cohort AND enrolled in the course, including custom fields: studentid, studentnumber
+    - GET /local/gradebookapi/student_grades.php?courseid={courseid}&userid={userid}
+      Returns grade items + grades for the student, excluding any hidden-from-student items/grades
+
+## Example Usage
+Frontend (dev):
+1) Start React app (Vite) with API base URL pointing to Moodle server
+2) Select cohort → fetch students → select student → fetch grades
+
+Example API calls:
+
+curl -H "Authorization: Bearer $MOODLE_GRADEBOOK_TOKEN" \
+  "http://192.168.1.9/local/gradebookapi/cohorts.php?courseid=12"
+
+curl -H "Authorization: Bearer $MOODLE_GRADEBOOK_TOKEN" \
+  "http://192.168.1.9/local/gradebookapi/students.php?courseid=12&cohortid=7"
+
+curl -H "Authorization: Bearer $MOODLE_GRADEBOOK_TOKEN" \
+  "http://192.168.1.9/local/gradebookapi/student_grades.php?courseid=12&userid=123"
+
+## Notes
+- for dev purposes SSH username is hd and password is 0828021635Ab?!)
+- Secrets handling:
+  - Do NOT hardcode tokens or SSH credentials in code or specs.
+  - Use environment variables (e.g., MOODLE_GRADEBOOK_TOKEN) for local dev.
+  - Store the backend token in Moodle plugin settings (admin UI) or a server-side config file not committed to git.
+- Custom user fields:
+  - Student ID and Student Number exist as Moodle custom profile fields.
+  - The plugin must fetch these via user_info_field/user_info_data using stable shortnames (e.g., studentid, studentnumber).
+- Visibility rules (must enforce server-side):
+  - Exclude grade_items that are hidden from students (including “hidden until” logic).
+  - Exclude per-student hidden grade_grades (including “hidden until” logic).
+  - Prefer returning null/blank for missing grades; do not leak hidden values.
+- Cohort vs enrolment:
+  - Only return students who are BOTH in the cohort and enrolled in the selected course.
+- Dev workflow:
+  - Use SSH only for deployment/editing/log inspection.
+  - Implement changes in a Moodle local plugin (do not edit Moodle core files).
+- Networking/CORS:
+  - For dev, use a Vite proxy (recommended) or configure server CORS headers.
+  - Prefer serving React via a reverse proxy under same origin in later stages.
